@@ -99,6 +99,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
             val rootFolder: FolderNode = mock {
                 on { id } doReturn rootFolderId
             }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(false)
             whenever(getTypedNodesFromFolder(rootFolderId)).thenReturn(flowOf(emptyList()))
             whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(-1L)
             whenever(getMediaUploadsFolderHandleUseCase()).thenReturn(null)
@@ -122,6 +124,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
         val rootFolderId = NodeId(123L)
         val childFolderId = NodeId(456L)
         val childFolder: FolderNode = mock { on { id } doReturn childFolderId }
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(false)
         whenever(getSyncedNodeIdsUseCase()).thenReturn(emptyList())
         whenever(getDeviceIdUseCase()).thenReturn(null)
         whenever(getDeviceIdAndNameMapUseCase()).thenReturn(emptyMap())
@@ -142,6 +146,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
             val ancestorFolderId = NodeId(456L)
             val syncedNodeId = NodeId(789L)
             val ancestorFolder: FolderNode = mock { on { id } doReturn ancestorFolderId }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(false)
             whenever(getSyncedNodeIdsUseCase()).thenReturn(listOf(syncedNodeId))
             whenever(getDeviceIdUseCase()).thenReturn(null)
             whenever(getDeviceIdAndNameMapUseCase()).thenReturn(emptyMap())
@@ -167,6 +173,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
             val siblingFolderId = NodeId(456L)
             val syncedNodeId = NodeId(789L)
             val siblingFolder: FolderNode = mock { on { id } doReturn siblingFolderId }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(false)
             whenever(getSyncedNodeIdsUseCase()).thenReturn(listOf(syncedNodeId))
             whenever(getDeviceIdUseCase()).thenReturn(null)
             whenever(getDeviceIdAndNameMapUseCase()).thenReturn(emptyMap())
@@ -192,6 +200,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
             val ancestorFolderId = NodeId(456L)
             val cameraUploadsFolderId = NodeId(789L)
             val ancestorFolder: FolderNode = mock { on { id } doReturn ancestorFolderId }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(false)
             whenever(getSyncedNodeIdsUseCase()).thenReturn(emptyList())
             whenever(getDeviceIdUseCase()).thenReturn(null)
             whenever(getDeviceIdAndNameMapUseCase()).thenReturn(emptyMap())
@@ -220,6 +230,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
         val cuFolderId = NodeId(146L)
         val rootFolder: FolderNode = mock { on { id } doReturn rootFolderId }
         val cuFolder: TypedNode = mock { on { id } doReturn cuFolderId }
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(false)
         whenever(isCameraUploadsEnabledUseCase()).thenReturn(true)
         whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
         whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(cuFolderId.longValue)
@@ -247,6 +259,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
             val childId = NodeId(789L)
             val rootFolder: FolderNode = mock { on { id } doReturn rootFolderId }
             val childNode: TypedNode = mock { on { id } doReturn childId }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(false)
             whenever(getBackupInfoUseCase()).thenReturn(emptyList())
             whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(-1L)
             whenever(getMediaUploadsFolderHandleUseCase()).thenReturn(null)
@@ -367,6 +381,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
         val syncedRemoteId = NodeId(999L)
         val rootFolder: FolderNode = mock { on { id } doReturn rootFolderId }
         val syncedFolder: TypedNode = mock { on { id } doReturn syncedRemoteId }
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(false)
         whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(-1L)
         whenever(getMediaUploadsFolderHandleUseCase()).thenReturn(null)
         whenever(getMyChatsFilesFolderIdUseCase()).thenReturn(NodeId(-1L))
@@ -389,6 +405,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
         runTest {
             val rootFolderId = NodeId(123L)
             val rootFolder: FolderNode = mock { on { id } doReturn rootFolderId }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(false)
             whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(-1L)
             whenever(getMediaUploadsFolderHandleUseCase()).thenReturn(null)
             whenever(getMyChatsFilesFolderIdUseCase()).thenReturn(NodeId(-1L))
@@ -422,6 +440,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
                 on { type } doReturn BackupInfoType.TWO_WAY_SYNC
                 on { deviceId } doReturn "otherDevice"
             }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getFeatureFlagValueUseCase(ApiFeatures.RestrictSyncAcrossDevices))
                 .thenReturn(true) // feature flag enabled - check all devices for sync/backup conflicts
             whenever(getBackupInfoUseCase()).thenReturn(listOf(backupInfo))
@@ -459,6 +479,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
             val childId = NodeId(789L)
             val parentFolder: FolderNode = mock { on { id } doReturn parentFolderId }
             val childNode: TypedNode = mock { on { id } doReturn childId }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getBackupInfoUseCase()).thenReturn(emptyList())
             whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(-1L)
             whenever(getMediaUploadsFolderHandleUseCase()).thenReturn(null)
@@ -490,6 +512,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
             val parentFolder: FolderNode = mock { on { id } doReturn parentFolderId }
             val syncedChild: TypedNode = mock { on { id } doReturn syncedChildId }
             val otherChild: TypedNode = mock { on { id } doReturn otherChildId }
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(false)
             whenever(getBackupInfoUseCase()).thenReturn(emptyList())
             whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(-1L)
             whenever(getMediaUploadsFolderHandleUseCase()).thenReturn(null)
@@ -531,6 +555,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
                 on { deviceId } doReturn "device1"
             }
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getBackupInfoUseCase()).thenReturn(listOf(backupInfo))
             whenever(getCameraUploadsFolderHandleUseCase()).thenReturn(-1L)
             whenever(getMediaUploadsFolderHandleUseCase()).thenReturn(null)
@@ -579,6 +605,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
                 on { deviceId } doReturn otherDeviceId
             }
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getFeatureFlagValueUseCase(ApiFeatures.RestrictSyncAcrossDevices))
                 .thenReturn(false) // Sync across devices is allowed (default)
             whenever(getBackupInfoUseCase()).thenReturn(listOf(backupInfo))
@@ -622,6 +650,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
                 on { deviceId } doReturn otherDeviceId
             }
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getFeatureFlagValueUseCase(ApiFeatures.RestrictSyncAcrossDevices))
                 .thenReturn(false) // Sync across devices is allowed (default)
             whenever(getBackupInfoUseCase()).thenReturn(listOf(backupInfo))
@@ -666,6 +696,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
                 on { deviceId } doReturn otherDeviceId
             }
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getFeatureFlagValueUseCase(ApiFeatures.RestrictSyncAcrossDevices))
                 .thenReturn(true)
             whenever(getBackupInfoUseCase()).thenReturn(listOf(backupInfo))
@@ -709,6 +741,8 @@ internal class MonitorMegaPickerFolderNodesUseCaseTest {
                 on { deviceId } doReturn otherDeviceId
             }
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getFeatureFlagValueUseCase(ApiFeatures.RestrictSyncAcrossDevices))
                 .thenReturn(true) // feature flag enabled - check all devices for sync/backup conflicts
             whenever(getBackupInfoUseCase()).thenReturn(listOf(backupInfo))

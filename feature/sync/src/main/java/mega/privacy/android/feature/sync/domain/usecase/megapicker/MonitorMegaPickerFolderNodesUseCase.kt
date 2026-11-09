@@ -98,6 +98,8 @@ internal class MonitorMegaPickerFolderNodesUseCase @Inject constructor(
         }
 
         // Original logic for sync setup flow
+        val isFeatureEnabled =
+            getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup)
         val currentDeviceId = runCatching { getDeviceIdUseCase() }.getOrNull()
         val syncedNodeIds = runCatching {
             getSyncedNodeIdsUseCase()
@@ -117,26 +119,30 @@ internal class MonitorMegaPickerFolderNodesUseCase @Inject constructor(
         }.getOrElse { false }
 
         val syncBackupInfoListOtherDevice = runCatching {
-            getBackupInfoUseCase()
-                .filter { backup ->
-                    (backup.deviceId != null && backup.deviceId != currentDeviceId) &&
-                            when (backup.type) {
-                                // Camera/Media Uploads from other devices - always check
-                                BackupInfoType.CAMERA_UPLOADS,
-                                BackupInfoType.MEDIA_UPLOADS,
-                                    -> true
+            if (isFeatureEnabled) {
+                getBackupInfoUseCase()
+                    .filter { backup ->
+                        (backup.deviceId != null && backup.deviceId != currentDeviceId) &&
+                                when (backup.type) {
+                                    // Camera/Media Uploads from other devices - always check
+                                    BackupInfoType.CAMERA_UPLOADS,
+                                    BackupInfoType.MEDIA_UPLOADS,
+                                        -> true
 
-                                // Sync from other devices
-                                BackupInfoType.TWO_WAY_SYNC,
-                                    -> {
-                                    // Include if feature flag is enabled (revert to old behavior)
-                                    // Exclude if feature flag is disabled (allow Sync-Sync across devices)
-                                    restrictSyncAcrossDevices
+                                    // Sync from other devices
+                                    BackupInfoType.TWO_WAY_SYNC,
+                                        -> {
+                                        // Include if feature flag is enabled (revert to old behavior)
+                                        // Exclude if feature flag is disabled (allow Sync-Sync across devices)
+                                        restrictSyncAcrossDevices
+                                    }
+
+                                    else -> false
                                 }
-
-                                else -> false
-                            }
-                }
+                    }
+            } else {
+                emptyList()
+            }
         }.getOrElse {
             Timber.d(it, "Error getting backup info for folder usage check")
             emptyList()

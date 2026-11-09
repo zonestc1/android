@@ -7,7 +7,9 @@ import mega.privacy.android.analytics.Analytics
 import mega.privacy.android.analytics.tracker.AnalyticsTracker
 import mega.privacy.android.domain.entity.node.FolderUsageResult
 import mega.privacy.android.domain.entity.node.NodeId
+import mega.privacy.android.domain.featuretoggle.ApiFeatures
 import mega.privacy.android.domain.usecase.backup.IsFolderUsedBySyncOrBackupAcrossDevicesUseCase
+import mega.privacy.android.domain.usecase.featureflag.GetFeatureFlagValueUseCase
 import mega.privacy.android.feature.sync.ui.formatter.FolderConflictMessageFormatter
 import mega.privacy.android.feature.sync.ui.mapper.sync.SyncRemoteFolderValidityMapper
 import mega.privacy.android.feature.sync.ui.mapper.sync.SyncValidityResult
@@ -26,6 +28,7 @@ import org.mockito.kotlin.whenever
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SyncRemoteFolderValidityMapperTest {
 
+    private val getFeatureFlagValueUseCase: GetFeatureFlagValueUseCase = mock()
     private val isFolderUsedBySyncOrBackupAcrossDevicesUseCase: IsFolderUsedBySyncOrBackupAcrossDevicesUseCase =
         mock()
     private val folderConflictMessageFormatter: FolderConflictMessageFormatter = mock()
@@ -40,6 +43,7 @@ class SyncRemoteFolderValidityMapperTest {
     fun setUp() {
         Analytics.initialise(mock<AnalyticsTracker>())
         underTest = SyncRemoteFolderValidityMapper(
+            getFeatureFlagValueUseCase = getFeatureFlagValueUseCase,
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase = isFolderUsedBySyncOrBackupAcrossDevicesUseCase,
             folderConflictMessageFormatter = folderConflictMessageFormatter,
         )
@@ -49,14 +53,40 @@ class SyncRemoteFolderValidityMapperTest {
     fun resetAndTearDown() {
         Analytics.initialise(null)
         reset(
+            getFeatureFlagValueUseCase,
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase,
             folderConflictMessageFormatter,
         )
     }
 
     @Test
+    fun `test that when feature flag is disabled, returns ValidFolderSelected`() = runTest {
+        val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(false)
+
+        val result = underTest(nodeId, remoteFolderDisplayName)
+
+        assertThat(result).isInstanceOf(SyncValidityResult.ValidFolderSelected::class.java)
+    }
+
+    @Test
+    fun `test that when feature flag check throws exception, returns ValidFolderSelected`() =
+        runTest {
+            val nodeId = NodeId(123L)
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenThrow(RuntimeException("Test exception"))
+
+            val result = underTest(nodeId, remoteFolderDisplayName)
+
+            assertThat(result).isInstanceOf(SyncValidityResult.ValidFolderSelected::class.java)
+        }
+
+    @Test
     fun `test that exact match with Camera Uploads shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -82,6 +112,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that child of Camera Uploads shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(isFolderUsedBySyncOrBackupAcrossDevicesUseCase(nodeId, true, true, false))
             .thenReturn(FolderUsageResult.UsedByCameraUploadChild)
         whenever(
@@ -100,6 +132,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that parent of Camera Uploads shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -125,6 +159,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that exact match with Media Uploads shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -150,6 +186,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that child of Media Uploads shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -175,6 +213,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that parent of Media Uploads shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -200,6 +240,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that UsedBySyncOrBackup shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -225,6 +267,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that UsedBySyncOrBackupParent shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -250,6 +294,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that UsedBySyncOrBackupChild shows correct snackbar`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -275,6 +321,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that NotUsed returns ValidFolderSelected`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,
@@ -293,6 +341,8 @@ class SyncRemoteFolderValidityMapperTest {
     @Test
     fun `test that exception in validation returns ValidFolderSelected`() = runTest {
         val nodeId = NodeId(123L)
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase(
                 nodeId,

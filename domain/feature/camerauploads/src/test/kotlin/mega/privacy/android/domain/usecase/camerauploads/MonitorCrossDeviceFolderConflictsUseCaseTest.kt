@@ -7,7 +7,9 @@ import kotlinx.coroutines.test.runTest
 import mega.privacy.android.domain.entity.camerauploads.CameraUploadFolderType
 import mega.privacy.android.domain.entity.node.FolderUsageResult
 import mega.privacy.android.domain.entity.node.NodeId
+import mega.privacy.android.domain.featuretoggle.ApiFeatures
 import mega.privacy.android.domain.usecase.backup.IsFolderUsedBySyncOrBackupAcrossDevicesUseCase
+import mega.privacy.android.domain.usecase.featureflag.GetFeatureFlagValueUseCase
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -29,6 +31,7 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
     private val isFolderUsedBySyncOrBackupAcrossDevicesUseCase =
         mock<IsFolderUsedBySyncOrBackupAcrossDevicesUseCase>()
     private val isMediaUploadsEnabledUseCase = mock<IsMediaUploadsEnabledUseCase>()
+    private val getFeatureFlagValueUseCase = mock<GetFeatureFlagValueUseCase>()
 
     @BeforeEach
     fun setUp() {
@@ -36,6 +39,7 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             getUploadFolderHandleUseCase = getUploadFolderHandleUseCase,
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase = isFolderUsedBySyncOrBackupAcrossDevicesUseCase,
             isMediaUploadsEnabledUseCase = isMediaUploadsEnabledUseCase,
+            getFeatureFlagValueUseCase = getFeatureFlagValueUseCase,
         )
     }
 
@@ -45,7 +49,21 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             getUploadFolderHandleUseCase,
             isFolderUsedBySyncOrBackupAcrossDevicesUseCase,
             isMediaUploadsEnabledUseCase,
+            getFeatureFlagValueUseCase
         )
+    }
+
+    // Feature Flag Tests
+
+    @Test
+    fun `test that when feature flag is disabled, emits null and completes`() = runTest {
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(false)
+
+        underTest().test {
+            assertThat(awaitItem()).isNull()
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     // Primary Folder Conflict Tests
@@ -56,6 +74,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             val primaryHandle = 123456L
             val conflictResult = FolderUsageResult.UsedBySyncOrBackup("other-device-id")
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -81,6 +101,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
         runTest {
             val primaryHandle = 123456L
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -103,6 +125,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
     fun `test that when primary folder is not used, emits null`() = runTest {
         val primaryHandle = 123456L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -130,6 +154,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             val secondaryHandle = 789012L
             val conflictResult = FolderUsageResult.UsedBySyncOrBackup("other-device-id")
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Secondary))
@@ -164,6 +190,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
     fun `test that when media uploads is disabled, secondary folder is not checked`() = runTest {
         val primaryHandle = 123456L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -185,9 +213,21 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
     // Exception Handling Tests
 
     @Test
+    fun `test that when feature flag check throws exception, exception propagates`() = runTest {
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenThrow(RuntimeException("Test exception"))
+
+        underTest().test {
+            awaitError() // Exception should propagate
+        }
+    }
+
+    @Test
     fun `test that when checking folder usage throws exception, emits null`() = runTest {
         val primaryHandle = 123456L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -214,6 +254,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             val primaryHandle = 123456L
             val conflictResult = FolderUsageResult.UsedBySyncOrBackupParent("other-device-id")
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -240,6 +282,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             val primaryHandle = 123456L
             val conflictResult = FolderUsageResult.UsedBySyncOrBackupChild("other-device-id")
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -264,6 +308,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
     fun `test that when primary folder is used by Camera Uploads parent, emits null`() = runTest {
         val primaryHandle = 123456L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -286,6 +332,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
     fun `test that when primary folder is used by Camera Uploads child, emits null`() = runTest {
         val primaryHandle = 123456L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -310,6 +358,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             val primaryHandle = 123456L
             val conflictResult = FolderUsageResult.UsedByMediaUpload
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -336,6 +386,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             val primaryHandle = 123456L
             val conflictResult = FolderUsageResult.UsedByMediaUploadParent
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -362,6 +414,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
             val primaryHandle = 123456L
             val conflictResult = FolderUsageResult.UsedByMediaUploadChild
 
+            whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+                .thenReturn(true)
             whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
                 .thenReturn(primaryHandle)
             whenever(isMediaUploadsEnabledUseCase()).thenReturn(false)
@@ -387,6 +441,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
         val primaryHandle = 123456L
         val secondaryHandle = 789012L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Secondary))
@@ -420,6 +476,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
         val primaryHandle = 123456L
         val secondaryHandle = 789012L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Secondary))
@@ -453,6 +511,8 @@ internal class MonitorCrossDeviceFolderConflictsUseCaseTest {
         val primaryHandle = 123456L
         val secondaryHandle = 789012L
 
+        whenever(getFeatureFlagValueUseCase(ApiFeatures.DCIMSelectionAsSyncBackup))
+            .thenReturn(true)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Primary))
             .thenReturn(primaryHandle)
         whenever(getUploadFolderHandleUseCase(CameraUploadFolderType.Secondary))
